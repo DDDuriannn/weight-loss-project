@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN" data-theme-scope="site">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4dd" />
+    <meta name="description" content="{{documentDescription}}" />
+    <title>{{documentTitle}}</title>
+    <script>
+      // Apply the saved theme before the stylesheet paints. Controls initialize in main.js.
+      (() => {
+        let theme;
+        try { theme = localStorage.getItem('loser-weightloss-theme'); } catch {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#17130f' : '#fff4dd';
+      })();
+    </script>
+    <script type="module" src="./src/main.js"></script>
+  </head>
+  <body>
+    <!-- PAGE -->
+  </body>
+</html>

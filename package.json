@@ -1,0 +1,19 @@
+{
+  "name": "loser-weight-loss-28",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "loser 减肥大业：zwh(loser) 的 28 天饮食与运动记录",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test",
+    "check:build": "node scripts/check-build.js"
+  },
+  "engines": { "node": ">=24" },
+  "devDependencies": {
+    "happy-dom": "21.0.4",
+    "vite": "8.3.5"
+  }
+}

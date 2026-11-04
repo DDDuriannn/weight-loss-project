@@ -1,0 +1,31 @@
+{
+  "title": "loser 减肥大业",
+  "owner": "zwh(loser)",
+  "startDate": "2026-11-04",
+  "endDate": "2026-12-01",
+  "timeZone": "Asia/Shanghai",
+  "intro": "28 天，记录饮食与运动，一天一天来。",
+  "records": [
+    {
+      "date": "2026-11-04",
+      "weightKg": 101,
+      "entries": [
+        {
+          "id": "day-1-diet",
+          "category": "diet",
+          "text": "控制饮食：4 个鸡蛋 + 2 勺蛋白粉 + 一盘西葫芦"
+        },
+        {
+          "id": "day-1-walk-run",
+          "category": "exercise",
+          "text": "运动：走路 + 跑步：10km"
+        },
+        {
+          "id": "day-1-cycling",
+          "category": "exercise",
+          "text": "运动：骑车 1.5 h"
+        }
+      ]
+    }
+  ]
+}
