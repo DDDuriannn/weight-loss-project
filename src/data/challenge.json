@@ -1,6 +1,6 @@
 {
-  "title": "loser 减肥大业",
-  "owner": "zwh(loser)",
+  "title": "减肥大业",
+  "owner": "zwh（loser & joker）",
   "startDate": "2026-11-04",
   "endDate": "2026-12-01",
   "timeZone": "Asia/Shanghai",
@@ -13,7 +13,7 @@
         {
           "id": "day-1-diet",
           "category": "diet",
-          "text": "控制饮食：4 个鸡蛋 + 2 勺蛋白粉 + 一盘西葫芦"
+          "text": "饮食：4 个鸡蛋 + 2 勺蛋白粉 + 一盘西葫芦"
         },
         {
           "id": "day-1-walk-run",
@@ -26,6 +26,36 @@
           "text": "运动：骑车 1.5 h"
         }
       ]
+    },
+    {
+      "date": "2026-11-05",
+      "weightKg": 100.1,
+      "entries": [
+        {
+          "id": "day-2-diet",
+          "category": "diet",
+          "text": "饮食：4 个鸡蛋 + 2 勺蛋白粉 + 一盘小白菜炒鸡蛋（约 400 大卡）"
+        },
+        {
+          "id": "day-2-strength",
+          "category": "exercise",
+          "text": "运动：卧推 + 哑铃划船 + 杠铃划船 + 哑铃卧推 + 深蹲 + 肱二头",
+          "image": {
+            "src": "media/day-02-strength.jpg",
+            "alt": "第 2 天力量训练记录截图"
+          }
+        },
+        {
+          "id": "day-2-run",
+          "category": "exercise",
+          "text": "运动：跑步 6 km",
+          "image": {
+            "src": "media/day-02-run.jpg",
+            "alt": "第 2 天跑步记录截图"
+          }
+        }
+      ],
+      "diary": "下午他让我给她安 VSCode，我一边给他安一边看她跟 crush 聊天。她的 crush 表示：“你怎么不来找我帮你安装？”，于是她便找她的 crush 给她安装去了"
     }
   ]
 }

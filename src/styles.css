@@ -41,6 +41,99 @@
   line-height: 1;
   transform: rotate(-4deg);
 }
+.call-open {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.call-open::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: var(--border);
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 1px 1px 0 var(--shadow-ink);
+  pointer-events: none;
+}
+.call-open svg {
+  position: relative;
+}
+@media (hover: hover) {
+  .call-open:hover::before {
+    box-shadow: 2px 2px 0 var(--shadow-ink);
+  }
+}
+.call-open:active {
+  transform: translate(1px, 1px);
+}
+.call-open:active::before {
+  box-shadow: none;
+}
+
+.call-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: clamp(16px, 5vw, 40px);
+  border: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  color: #171717;
+  color-scheme: light;
+}
+.call-screen[open] {
+  display: grid;
+  place-items: center;
+}
+.call-screen::backdrop {
+  background: #fff;
+}
+:root:has(.call-screen[open]) {
+  overflow: hidden;
+}
+.call-back {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+}
+.call-back:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+.call-screen-message {
+  max-width: 100%;
+  margin: 0;
+  font: 600 clamp(16px, 4.8vw, 22px)/1.55 var(--font-body);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
 
 .challenge-page .challenge-hero {
   display: block;
@@ -65,9 +158,30 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+.challenge-promise {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(144px, 184px);
+  align-items: center;
+  gap: 16px 24px;
+  min-width: 0;
+  margin: 0;
+}
+.challenge-intro-copy {
+  min-width: 0;
+  margin: 0;
+}
 .challenge-promise blockquote {
   max-width: 50ch;
   overflow-wrap: anywhere;
+}
+.challenge-intro-gif {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
 }
 .challenge-page .site-footer {
   padding-bottom: 28px;
@@ -121,13 +235,58 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.challenge-detail-entry-content {
+  min-width: 0;
+}
+.challenge-entry-media {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 10px;
+  border-radius: 10px;
+}
+.challenge-entry-media img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 460px;
+  border: 1.5px solid var(--ink);
+  border-radius: inherit;
+  object-fit: contain;
+}
+.challenge-detail-entry-content .challenge-entry-media img {
+  max-height: 300px;
+}
+.challenge-diary {
+  min-width: 0;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--ink-3);
+}
+.challenge-detail > .challenge-diary {
+  margin-top: 0;
+}
+.challenge-diary-title {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+.challenge-diary-text {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.challenge-row--collapsed :is(.challenge-entry-media, .challenge-diary) {
+  display: none;
+}
 .challenge-row--collapsed .challenge-row-body > .challenge-row-note:only-child {
   display: block;
   margin: 0;
-}
-.challenge-row--collapsed .challenge-row-body > .challenge-detail-empty:only-child {
-  margin: 0;
-  font-size: 14px;
 }
 .challenge-detail-empty {
   line-height: 1.65;
@@ -177,8 +336,20 @@
 }
 
 @media (width <= 720px) {
+  .challenge-page main {
+    grid-template-areas: "title" "calendar" "promise" "log";
+  }
   .challenge-page .challenge-hero h1 {
     font-size: clamp(26px, 7.2vw, 34px);
+  }
+  .challenge-promise {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    margin-top: 4px;
+  }
+  .challenge-intro-gif {
+    justify-self: center;
+    width: min(240px, 100%);
   }
   .challenge-page .challenge-log {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -271,6 +442,7 @@
 }
 .challenge-row-date > .challenge-weight {
   margin-top: 6px;
+  padding-inline: 6px;
 }
 .challenge-detail > .challenge-weight {
   align-self: flex-start;
@@ -280,6 +452,7 @@
 @media (width <= 600px) {
   .challenge-row-date > .challenge-weight {
     margin-top: 2px;
+    padding-inline: 9px;
   }
   .challenge-weight {
     padding: 7px 9px;

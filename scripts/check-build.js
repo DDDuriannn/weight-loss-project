@@ -18,7 +18,7 @@ for (const record of data.records) {
     assert.ok(Number.isFinite(record.weightKg) && record.weightKg > 0, `Weight must be finite and positive: ${record.date}`);
   }
 }
-const records = data.records.filter((record) => hasWeight(record) || (record.entries?.length || 0) > 0);
+const records = data.records.filter((record) => hasWeight(record) || record.diary?.trim() || (record.entries?.length || 0) > 0);
 const entries = records.flatMap((record) => record.entries || []);
 const recordsByDate = new Map(data.records.map((record) => [record.date, record]));
 const recordedDays = records.map((record) => (Date.parse(`${record.date}T00:00:00Z`) - start) / 86400000 + 1);
@@ -27,7 +27,8 @@ const trailingBlanks = (7 - (leadingBlanks + dayCount) % 7) % 7;
 const basePath = '/replica/';
 const mimeTypes = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
-  '.png': 'image/png',
+  '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.png': 'image/png', '.webp': 'image/webp',
   '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
   '.woff2': 'font/woff2', '.json': 'application/json',
 };
@@ -76,10 +77,20 @@ async function load(reference, parent = home) {
   const bytes = Buffer.from(await response.arrayBuffer());
   assert.ok(bytes.length > 0, `Empty resource: ${url.pathname}`);
   if (extension === '.woff2') assert.equal(bytes.toString('ascii', 0, 4), 'wOF2', url.pathname);
-  if (extension === '.css' || extension === '.js') {
-    assert.doesNotMatch(bytes.toString('utf8'), /^\s*<(?:!doctype|html)/i, url.pathname);
+  if (extension === '.gif') assert.match(bytes.toString('ascii', 0, 6), /^GIF8[79]a$/, url.pathname);
+  if (extension === '.jpg' || extension === '.jpeg') {
+    assert.equal(bytes.subarray(0, 3).toString('hex'), 'ffd8ff', url.pathname);
   }
-  const resource = { url, extension, text: bytes.toString('utf8') };
+  if (extension === '.png') assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', url.pathname);
+  if (extension === '.webp') {
+    assert.equal(bytes.toString('ascii', 0, 4), 'RIFF', url.pathname);
+    assert.equal(bytes.toString('ascii', 8, 12), 'WEBP', url.pathname);
+  }
+  const text = ['.html', '.css', '.js'].includes(extension) ? bytes.toString('utf8') : '';
+  if (extension === '.css' || extension === '.js') {
+    assert.doesNotMatch(text, /^\s*<(?:!doctype|html)/i, url.pathname);
+  }
+  const resource = { url, extension, text };
   loaded.set(url.href, resource);
   return resource;
 }
@@ -119,6 +130,30 @@ function checkWeight(component, date) {
   }
 }
 
+function checkDiary(container, date) {
+  const text = recordsByDate.get(date)?.diary;
+  const diaries = container.querySelectorAll('.challenge-diary');
+  assert.equal(diaries.length, text ? 1 : 0, `Incorrect diary count: ${date}`);
+  if (text) assert.equal(diaries[0].querySelector('.challenge-diary-text')?.textContent, text, `Incorrect diary text: ${date}`);
+}
+
+function checkEntry(container, titleSelector, entry) {
+  assert.ok(container, `Missing entry: ${entry.id}`);
+  const title = container.querySelector(titleSelector);
+  assert.equal(title?.textContent, entry.text, `Incorrect entry text: ${entry.id}`);
+  assert.equal(title.childElementCount, 0, `Entry title must be plain text: ${entry.id}`);
+
+  const images = container.querySelectorAll('img');
+  assert.equal(images.length, entry.image ? 1 : 0, `Incorrect image count: ${entry.id}`);
+  if (!entry.image) return;
+  const image = images[0];
+  const preview = image.closest('a.challenge-entry-media');
+  const expectedUrl = new URL(entry.image.src, home).href;
+  assert.equal(image.src, expectedUrl, `Incorrect image source: ${entry.id}`);
+  assert.equal(image.alt, entry.image.alt, `Incorrect image description: ${entry.id}`);
+  assert.equal(preview?.href, expectedUrl, `Image preview must point to the same local image: ${entry.id}`);
+}
+
 try {
   // Root-relative assets must really fail rather than accidentally pass this check.
   assert.equal((await fetch(new URL('/fonts/Baloo2-Bold.woff2', origin))).status, 404);
@@ -126,9 +161,7 @@ try {
   assert.match(html, /<html\b[^>]*lang="zh-CN"/i);
   assert.doesNotMatch(html, /<!--\s*[A-Z_]+\s*-->|\{\{[\s\S]*?\}\}|__[A-Z][A-Z0-9_]*__|%[A-Z][A-Z0-9_]*%/,
     'Unresolved build placeholder in HTML');
-  assert.doesNotMatch(html, /<(?:base|iframe|object|embed|img)\b/i, 'Unexpected embedded document, base URL or image avatar');
-  assert.doesNotMatch(html, /Tibo|Codex|OpenAI|thsottiaux|codex-resets|America\/Los_Angeles|language-(?:menu|toggle)|x-link|data-(?:vote|presence)|challenge-vote|\/api\//i,
-    'Old site branding or integrations remain in HTML');
+  assert.doesNotMatch(html, /<(?:base|iframe|object|embed)\b/i, 'Unexpected embedded document or base URL');
 
   assert.equal(dayCount, 28, 'Expected a 28-day plan');
   assert.equal(data.timeZone, 'Asia/Shanghai', 'Expected Beijing time');
@@ -145,35 +178,57 @@ try {
     .filter((attrs) => attrs.class?.split(/\s+/).includes('challenge-row-toggle'));
   assert.equal(rowToggles.length, records.length, 'Each recorded date needs a row toggle');
   assert.ok(rowToggles.every((attrs) => attrs['aria-expanded'] === 'true'), 'Recorded rows must start expanded');
-  const articles = [...html.matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/gi)];
-  assert.equal(articles.length, entries.length, 'Article count does not match recorded entries');
-  for (const article of articles) {
-    assert.match(article[1], /<h3\b[^>]*>[^<]+<\/h3>/i, 'Entry titles must be plain text');
-    assert.doesNotMatch(article[1], /<a\b/i, 'Record titles must not be links');
-  }
-  for (const entry of entries) assert.ok(html.includes(escape(entry.text)), `Missing record: ${entry.id}`);
-
   // Parse the published HTML independently of the model and renderer. Resources
   // are loaded explicitly below, so parsing must never execute the application.
   parsedWindow = new Window({
     url: home.href,
-    settings: { disableJavaScriptEvaluation: true, disableJavaScriptFileLoading: true, disableCSSFileLoading: true },
+    settings: { disableJavaScriptEvaluation: true, disableJavaScriptFileLoading: true, disableCSSFileLoading: true, enableImageFileLoading: false },
   });
   parsedWindow.document.write(html);
   const document = parsedWindow.document;
+  assert.equal(document.querySelector('.language-menu, .language-toggle, .x-link, .masthead-presence, .challenge-votes, .challenge-vote, [data-vote], [data-presence]'), null,
+    'Old site controls remain in HTML');
+  const chrome = [document.title, document.querySelector('.masthead')?.textContent, document.querySelector('footer')?.textContent].join(' ');
+  assert.doesNotMatch(chrome, /Tibo|Codex|OpenAI|thsottiaux|codex-resets|America\/Los_Angeles/i,
+    'Old site branding remains in the page chrome');
+  assert.equal(document.querySelectorAll('.masthead button').length, 2, 'Expected call and theme controls');
+  assert.ok(document.querySelector('.masthead button[data-role="call-open"]'), 'Missing call control');
+  assert.ok(document.querySelector('.masthead button[data-role="theme-toggle"]'), 'Missing theme control');
+  assert.ok(document.querySelector('dialog[data-role="call-screen"]'), 'Missing call screen');
+  const introImage = document.querySelector('.challenge-promise img.challenge-intro-gif');
+  assert.equal(introImage?.src, new URL('media/intro.gif', home).href, 'Missing intro GIF under the repository subpath');
+  const images = [...document.querySelectorAll('img')];
+  assert.equal(images.length, 1 + entries.filter((entry) => entry.image).length * 2,
+    'Expected the intro GIF and each recorded image in both views');
+  const media = new Set(images.map((image) => image.src));
+  const articles = document.querySelectorAll('article');
+  assert.equal(articles.length, entries.length, 'Article count does not match recorded entries');
   assert.equal(document.querySelectorAll('.challenge-weight').length, dayCount + records.length,
     'Expected one weight display per recorded row and calendar panel');
   for (const record of records) {
     const day = (Date.parse(`${record.date}T00:00:00Z`) - start) / 86400000 + 1;
-    const components = document.querySelectorAll(`#day-${day} .challenge-row-date .challenge-weight`);
+    const row = document.getElementById(`day-${day}`);
+    const panel = document.querySelector(`[data-detail-day="${day}"]`);
+    const components = row.querySelectorAll('.challenge-row-date .challenge-weight');
     assert.equal(components.length, 1, `Each recorded row needs exactly one weight display: ${record.date}`);
     checkWeight(components[0], record.date);
+    checkDiary(row, record.date);
+    const details = new Map([...panel.querySelectorAll('li[data-entry-id]')].map((item) => [item.dataset.entryId, item]));
+    assert.equal(details.size, record.entries?.length || 0, `Calendar entry count does not match: ${record.date}`);
+    for (const entry of record.entries || []) {
+      const article = document.getElementById(entry.id);
+      assert.ok(article?.matches('article') && row.contains(article), `Entry is missing from its day: ${entry.id}`);
+      checkEntry(article, '.challenge-entry-title', entry);
+      checkEntry(details.get(entry.id), '.challenge-detail-title', entry);
+    }
   }
   for (const day of days) {
     const date = new Date(start + (day - 1) * 86400000).toISOString().slice(0, 10);
-    const components = document.querySelectorAll(`[data-detail-day="${day}"] .challenge-weight`);
+    const panel = document.querySelector(`[data-detail-day="${day}"]`);
+    const components = panel.querySelectorAll('.challenge-weight');
     assert.equal(components.length, 1, `Each calendar panel needs exactly one weight display: ${date}`);
     checkWeight(components[0], date);
+    checkDiary(panel, date);
   }
   assert.deepEqual(dayAttributes(html, 'data-day'), days, 'Date strip must include all 28 days');
   assert.deepEqual(dayAttributes(html, 'data-select-day'), days, 'Calendar must include all 28 date tiles');
@@ -185,20 +240,18 @@ try {
   assert.deepEqual(calendarCells, [
     ...Array(leadingBlanks).fill(null), ...days, ...Array(trailingBlanks).fill(null),
   ], 'Calendar weekday alignment is incorrect');
-  for (const match of html.matchAll(/<a\b[^>]*>/gi)) {
-    const href = attributes(match[0]).href;
-    if (!href) continue;
+  for (const link of document.querySelectorAll('a[href]')) {
+    const href = link.getAttribute('href');
     const url = new URL(href, home);
     assert.equal(url.origin, origin, `Unexpected external link: ${href}`);
     assert.ok(url.pathname.startsWith(basePath), `Link escaped the repository subpath: ${href}`);
   }
 
-  for (const match of html.matchAll(/<(script|link|img|source|video|audio)\b[^>]*>/gi)) {
-    const tag = match[1].toLowerCase();
-    const attrs = attributes(match[0]);
-    const references = [attrs.src, attrs.poster];
-    if (attrs.srcset) references.push(...attrs.srcset.split(',').map((item) => item.trim().split(/\s+/)[0]));
-    if (tag === 'link' && !/^(?:canonical|alternate)$/i.test(attrs.rel || '')) references.push(attrs.href);
+  for (const element of document.querySelectorAll('script, link, img, source, video, audio')) {
+    const references = [element.getAttribute('src'), element.getAttribute('poster')];
+    const srcset = element.getAttribute('srcset');
+    if (srcset) references.push(...srcset.split(',').map((item) => item.trim().split(/\s+/)[0]));
+    if (element.localName === 'link') references.push(element.getAttribute('href'));
     for (const reference of references.filter(Boolean)) await load(reference);
   }
   for (const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) checkCode(match[1], 'Inline script');
@@ -222,9 +275,11 @@ try {
     'Baloo2-Bold.woff2', 'Baloo2-ExtraBold.woff2',
     'GenSenRounded-Bold-UI.woff2', 'GenSenRounded-Heavy-UI.woff2',
   ].sort(), 'Expected all four local fonts');
-  assert.equal(loaded.size, 7, 'Expected only HTML, JavaScript, CSS and four fonts');
+  assert.ok([...media].every((url) => loaded.has(url)), 'Every rendered image must be fetched over HTTP');
+  assert.equal(loaded.size, 1 + scripts.length + styles.length + fonts.size + media.size,
+    'Unexpected resource outside the page, scripts, styles, fonts and rendered media');
 
-  console.log(`Build check passed: ${basePath}, ${dayCount} days, ${records.length} recorded row, ${articles.length} articles, ${document.querySelectorAll('.challenge-weight').length} verified weight displays, 28 tiles/panels, ${leadingBlanks}/${trailingBlanks} calendar blanks, ${loaded.size} HTTP 200 resources (${scripts.length} script, ${styles.length} stylesheet, ${fonts.size} fonts).`);
+  console.log(`Build check passed: ${basePath}, ${dayCount} days, ${records.length} recorded rows, ${articles.length} articles, ${document.querySelectorAll('.challenge-diary').length} diary displays, ${document.querySelectorAll('.challenge-weight').length} verified weight displays, ${dayCount} tiles/panels, ${leadingBlanks}/${trailingBlanks} calendar blanks, ${loaded.size} HTTP 200 resources (${scripts.length} script, ${styles.length} stylesheet, ${fonts.size} fonts, ${media.size} media).`);
   console.log('All resources stay under the repository subpath; no unresolved placeholders or external loading integrations found.');
 } finally {
   if (parsedWindow) { await parsedWindow.happyDOM.abort(); parsedWindow.close(); }

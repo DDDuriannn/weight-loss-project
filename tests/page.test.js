@@ -49,7 +49,7 @@ function environment(instant = firstEvening, hash = '', config = challenge) {
   };
 }
 
-test('published diary data remains valid as records, text and weights change', () => {
+test('published diary data remains valid as records, text, weights and media change', () => {
   const live = loadChallenge();
   assert.ok(typeof live.title === 'string' && live.title.trim());
   assert.ok(typeof live.owner === 'string' && live.owner.trim());
@@ -64,6 +64,7 @@ test('published diary data remains valid as records, text and weights change', (
     assert.ok(day, `Published record is outside the plan: ${record.date}`);
     assert.deepEqual(day.entries, record.entries || []);
     if (Object.hasOwn(record, 'weightKg')) assert.equal(day.weightKg, record.weightKg);
+    if (Object.hasOwn(record, 'diary')) assert.equal(day.diary, record.diary);
   }
   assert.doesNotThrow(() => getChallengeStatus(live));
 });
@@ -123,6 +124,84 @@ test('a supplied weight must be a finite positive number; invalid values are nev
   }
 });
 
+test('diary-only dates render in both views without adding an activity', () => {
+  const config = structuredClone(challenge);
+  const diary = '第一行。\n记录 <em> 与 & 原样保留。';
+  config.records.push({ date: '2026-11-05', diary });
+  const [, recorded, empty] = buildDays(config);
+  assert.equal(recorded.diary, diary);
+  assert.equal(recorded.hasDiary, true);
+  assert.equal(recorded.hasRecords, true);
+  assert.equal(recorded.state, 'empty');
+  assert.equal(empty.hasDiary, false);
+
+  const env = environment(firstEvening, '', config);
+  try {
+    const { document } = env;
+    const row = document.querySelector('#day-2');
+    const panel = document.querySelector('[data-detail-day="2"]');
+    for (const container of [row, panel]) {
+      const content = container.querySelector('.challenge-diary-text');
+      assert.equal(content.textContent, diary);
+      assert.equal(content.querySelector('em'), null);
+      assert.equal(container.querySelector('.challenge-diary-title').textContent, '日记');
+      assert.equal(container.querySelector('article, .challenge-detail-entries'), null);
+    }
+    assert.equal(document.querySelector('[data-select-day="2"]').parentElement.querySelector('.challenge-tile-count'), null);
+    assert.equal(panel.querySelector('.challenge-detail-empty').textContent, '暂无饮食与运动记录');
+    assert.equal(document.querySelector('#day-3, [data-detail-day="3"] .challenge-diary'), null);
+  } finally { env.close(); }
+});
+
+test('activity images render as local previews in the list and calendar with plain text titles', () => {
+  const config = structuredClone(challenge);
+  const entry = {
+    id: 'fixture-strength', category: 'exercise', text: '力量训练 <原样> & 完成',
+    image: { src: 'media/fixture-strength.jpg', alt: '力量训练 <记录> & "完成"' },
+  };
+  config.records.push({ date: '2026-11-05', entries: [entry] });
+  const env = environment(firstEvening, '', config);
+  try {
+    const { document } = env;
+    for (const [container, selector] of [
+      [document.getElementById(entry.id), '.challenge-entry-title'],
+      [document.querySelector(`[data-detail-day="2"] [data-entry-id="${entry.id}"]`), '.challenge-detail-title'],
+    ]) {
+      const title = container.querySelector(selector);
+      assert.equal(title.textContent, entry.text);
+      assert.equal(title.childElementCount, 0);
+      const preview = container.querySelector('a.challenge-entry-media');
+      const image = preview.querySelector('img');
+      assert.equal(image.alt, entry.image.alt);
+      assert.equal(image.src, new URL(entry.image.src, document.URL).href);
+      assert.equal(preview.href, image.src);
+      assert.equal(preview.target, '_blank');
+      assert.ok(preview.relList.contains('noopener'));
+    }
+    assert.equal(document.querySelector('#day-1 .challenge-entry-media, [data-detail-day="1"] .challenge-entry-media'), null);
+  } finally { env.close(); }
+});
+
+test('a supplied diary needs text and an activity image needs a safe local media path and alt text', () => {
+  for (const diary of [null, 5, ' \n ']) {
+    const config = structuredClone(challenge);
+    config.records[0].diary = diary;
+    assert.throws(() => buildDays(config));
+  }
+  for (const image of [
+    null,
+    { src: 'https://example.test/media/remote.jpg', alt: '外部图片' },
+    { src: '/media/absolute.jpg', alt: '绝对路径' },
+    { src: 'media/../outside.jpg', alt: '跨目录' },
+    { src: 'media/active.svg', alt: '活动内容' },
+    { src: 'media/fixture.jpg', alt: '  ' },
+  ]) {
+    const config = structuredClone(challenge);
+    config.records[0].entries[0].image = image;
+    assert.throws(() => buildDays(config));
+  }
+});
+
 test('day calculation uses Beijing midnight and includes the entire final day', () => {
   for (const [instant, day, phase, clampedDay] of [
     ['2026-11-03T15:59:59Z', 0, 'before', 1],
@@ -143,7 +222,10 @@ test('personal page has one readable record day, all 28 dates and no old identit
     const { document } = env;
     assert.equal(document.querySelector('.masthead-title').textContent.trim(), challenge.title);
     assert.equal(document.querySelector('.masthead-emoji').textContent, '🤡');
-    assert.equal(document.querySelectorAll('.masthead button').length, 1);
+    assert.equal(document.querySelectorAll('.masthead button').length, 2);
+    assert.ok(document.querySelector('.masthead button[data-role="call-open"]'));
+    assert.ok(document.querySelector('.masthead button[data-role="theme-toggle"]'));
+    assert.ok(document.querySelector('dialog[data-role="call-screen"]'));
     assert.equal(document.querySelectorAll('.challenge-row').length, 1);
     assert.equal(document.querySelector('.challenge-row').id, 'day-1');
     assert.equal(document.querySelectorAll('article').length, 3);
@@ -151,7 +233,9 @@ test('personal page has one readable record day, all 28 dates and no old identit
     assert.equal(document.querySelectorAll('.challenge-strip button').length, 28);
     assert.equal(document.querySelectorAll('[data-select-day]').length, 28);
     assert.equal(document.querySelectorAll('[data-detail-day]').length, 28);
-    assert.equal(document.querySelectorAll('a, img, iframe, script, .language-toggle, .challenge-votes, .masthead-presence').length, 0);
+    assert.equal(document.querySelectorAll('a, iframe, script, .language-toggle, .challenge-votes, .masthead-presence').length, 0);
+    assert.equal(document.querySelectorAll('img').length, 1);
+    assert.equal(document.querySelector('.challenge-promise img.challenge-intro-gif').getAttribute('src'), '/media/intro.gif');
     assert.doesNotMatch(document.body.innerHTML, /Tibo|Codex|thsottiaux|产品改进|储备重置|美西|https?:|undefined|<!--\s*CHALLENGE_/);
     assert.match(document.querySelector('.challenge-period').textContent, /2026\.11\.04 — 2026\.12\.01 · 共 28 天/);
   } finally { env.close(); }

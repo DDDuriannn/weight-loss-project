@@ -5,6 +5,9 @@
       <div class="masthead-copy"><div class="masthead-title-row"><span class="masthead-title"><!-- BRAND --></span></div></div>
     </div>
     <div class="masthead-side">
+      <button class="call-open" type="button" data-role="call-open" aria-label="为zwh拨打120" title="为zwh拨打120" aria-haspopup="dialog" aria-controls="call-screen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.1 3.5h2.5l1.2 4.3-2.2 1.6a15.6 15.6 0 0 0 6 6l1.6-2.2 4.3 1.2v2.5c0 2.2-1.9 3.6-4 3C9.6 18.8 5.2 14.4 3.8 7.5c-.6-2.1.8-4 3.3-4Z"/></svg>
+      </button>
       <button class="theme-toggle" type="button" data-role="theme-toggle" aria-label="切换明暗主题" title="切换明暗主题">
         <span class="theme-toggle-icons" aria-hidden="true">
           <svg class="theme-toggle-icon theme-toggle-icon--moon" viewBox="0 0 24 24"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg>
@@ -33,6 +36,13 @@
         </div>
       </div>
     </aside>
+    <div class="challenge-promise">
+      <figure class="challenge-intro-copy">
+        <blockquote><!-- INTRO --></blockquote>
+        <figcaption><span aria-hidden="true">🤡</span><strong><!-- OWNER --></strong></figcaption>
+      </figure>
+      <img class="challenge-intro-gif" src="/media/intro.gif" width="439" height="439" alt="减肥大业的介绍动画">
+    </div>
     <section class="challenge-log" aria-labelledby="challenge-log-title">
       <div class="challenge-progress" data-challenge-progress data-day-label="第 {day} 天 / 共 {total} 天" data-before="即将开始" data-after="挑战已结束"><span data-progress-label><!-- PROGRESS --></span></div>
       <div class="challenge-log-heading">
@@ -57,7 +67,12 @@
       </div>
       <ol class="challenge-ledger" id="challenge-ledger"><!-- CHALLENGE_LEDGER --></ol>
     </section>
-    <figure class="challenge-promise"><blockquote><!-- INTRO --></blockquote><figcaption><span aria-hidden="true">🤡</span><strong><!-- OWNER --></strong></figcaption></figure>
   </main>
   <footer class="site-footer"><p><!-- OWNER --> · 28 天减肥记录</p></footer>
 </div>
+<dialog class="call-screen" id="call-screen" data-role="call-screen" aria-labelledby="call-screen-message">
+  <button class="call-back" type="button" data-role="call-back" aria-label="返回" title="返回" autofocus>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+  </button>
+  <p class="call-screen-message" id="call-screen-message">被 120 拉走也得把这 28 天扛完</p>
+</dialog>

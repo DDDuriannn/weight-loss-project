@@ -1,4 +1,5 @@
 const DAY_MS = 86_400_000;
+const MEDIA_PATH = /^media\/(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.(?:jpe?g|png|webp)$/;
 export const CATEGORY_LABELS = { exercise: '运动', diet: '饮食' };
 
 function dateTime(date) {
@@ -47,13 +48,23 @@ export function buildDays(config) {
         && (typeof record.weightKg !== 'number' || !Number.isFinite(record.weightKg) || record.weightKg <= 0)) {
       throw new Error(`体重必须是大于零的有限数字：${record.date}`);
     }
+    if (Object.hasOwn(record, 'diary') && (typeof record.diary !== 'string' || !record.diary.trim())) {
+      throw new Error(`日记必须是非空文本：${record.date}`);
+    }
     for (const entry of entries) {
-      if (!CATEGORY_LABELS[entry.category] || !entry.text?.trim() || !entry.id || ids.has(entry.id)) {
+      if (!Object.hasOwn(CATEGORY_LABELS, entry.category) || !entry.text?.trim() || !entry.id || ids.has(entry.id)) {
         throw new Error(`记录内容或类别无效：${entry.id}`);
+      }
+      if (Object.hasOwn(entry, 'image')) {
+        const { image } = entry;
+        if (typeof image?.src !== 'string' || !MEDIA_PATH.test(image.src)
+            || typeof image.alt !== 'string' || !image.alt.trim()) {
+          throw new Error(`记录图片需要 media/ 内的本地路径和替代文本：${entry.id}`);
+        }
       }
       ids.add(entry.id);
     }
-    byDate.set(record.date, { entries, weightKg: record.weightKg });
+    byDate.set(record.date, { entries, weightKg: record.weightKg, diary: record.diary });
   }
   const dateLabel = new Intl.DateTimeFormat('zh-CN', {
     month: 'long', day: 'numeric', weekday: 'short', timeZone: 'UTC',
@@ -64,18 +75,21 @@ export function buildDays(config) {
     const record = byDate.get(date);
     const entries = record?.entries || [];
     const weightKg = record?.weightKg;
+    const diary = record?.diary;
     const hasWeight = weightKg !== undefined;
     const hasEntries = entries.length > 0;
+    const hasDiary = diary !== undefined;
     const categories = Object.keys(CATEGORY_LABELS).filter((kind) => entries.some((entry) => entry.category === kind));
     const label = `第 ${String(index + 1).padStart(2, '0')} 天`;
     const displayDate = dateLabel.format(instant);
     const summary = categories.length ? categories.map((kind) => CATEGORY_LABELS[kind]).join(' + ')
-      : hasWeight ? '已记录体重' : '暂无记录';
+      : hasWeight ? '已记录体重' : hasDiary ? '已记录日记' : '暂无记录';
     const weightLabel = hasWeight ? `体重 ${weightKg} kg` : '体重未记录';
     return {
       day: index + 1, date, label, dateLabel: displayDate,
       shortDate: `${instant.getUTCMonth() + 1}/${instant.getUTCDate()}`,
-      entries, categories, weightKg, hasWeight, hasEntries, hasRecords: hasWeight || hasEntries,
+      entries, categories, weightKg, diary, hasWeight, hasEntries, hasDiary,
+      hasRecords: hasWeight || hasEntries || hasDiary,
       state: categories.length > 1 ? 'mixed' : categories[0] || 'empty',
       summary: `${label} · ${displayDate} · ${summary}`,
       accessibleLabel: `${label}, ${displayDate}: ${summary}；${weightLabel}`,
