@@ -56,6 +56,57 @@
         }
       ],
       "diary": "下午他让我给她安 VSCode，我一边给他安一边看她跟 crush 聊天。她的 crush 表示：“你怎么不来找我帮你安装？”，于是她便找她的 crush 给她安装去了"
+    },
+    {
+      "date": "2026-11-06",
+      "weightKg": 100,
+      "entries": [
+        {
+          "id": "day-3-diet",
+          "category": "diet",
+          "text": "饮食：4 个鸡蛋 + 1 勺蛋白粉 + 一盘西葫芦肉片 + 放纵餐（约 1400 大卡）"
+        },
+        {
+          "id": "day-3-strength",
+          "category": "exercise",
+          "text": "运动：卧推 + 深蹲 + 挺举 + 高位下拉 + 腹",
+          "image": {
+            "src": "media/day-03-strength.jpg",
+            "alt": "第 3 天力量训练记录截图"
+          }
+        },
+        {
+          "id": "day-3-run",
+          "category": "exercise",
+          "text": "运动：跑步 3 km",
+          "image": {
+            "src": "media/day-03-run.jpg",
+            "alt": "第 3 天跑步记录截图"
+          }
+        }
+      ],
+      "diary": "元哥用自己的节奏帮我成功拿下了女生的微信，元哥跟人家说我的技术很牛逼，我表示元哥的节奏更牛逼。然后不出意外果然聊的很尬，已经 24 小时没发过消息了"
+    },
+    {
+      "date": "2026-11-07",
+      "weightKg": 99.2,
+      "entries": [
+        {
+          "id": "day-4-diet",
+          "category": "diet",
+          "text": "饮食：4 个鸡蛋 + 2 勺蛋白粉 + 一盘西兰花 + 100g 米饭（约 500 大卡）"
+        },
+        {
+          "id": "day-4-strength",
+          "category": "exercise",
+          "text": "运动：卧推 + 高位下拉 + 杠铃划船 + 腹",
+          "image": {
+            "src": "media/day-04-strength.jpg",
+            "alt": "第 4 天力量训练记录截图"
+          }
+        }
+      ],
+      "diary": "练他妈挺举差点脱臼了操"
     }
   ]
 }
