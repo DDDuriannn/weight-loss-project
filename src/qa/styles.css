@@ -1,0 +1,150 @@
+.qa-home-link,
+.qa-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.qa-home-link,
+.qa-button-primary,
+.qa-button[aria-pressed="true"]:not(.qa-theme) {
+  background: var(--sun);
+  color: #26201a;
+  box-shadow: 2px 2px 0 var(--shadow-ink);
+}
+
+.qa-home-link { margin-top: 12px; }
+
+.qa-home-link:hover,
+.qa-button:not(:disabled):hover { border-color: currentColor; text-decoration: underline; }
+
+.qa-button:disabled { cursor: default; opacity: .55; }
+
+.qa-page {
+  --qa-error: #992820;
+  --qa-success: #225c40;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .qa-page {
+  --qa-error: #ffaea2;
+  --qa-success: #a7e5bf;
+}
+
+.qa-page [hidden] { display: none; }
+
+.qa-shell { width: min(100%, 780px); margin: 0 auto; padding: 24px 24px 56px; }
+
+.qa-header,
+.qa-board-heading,
+.qa-board-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.qa-back,
+.qa-footer a { color: var(--ink); font-weight: 700; text-underline-offset: .2em; }
+
+.qa-main { margin-top: clamp(24px, 5vw, 48px); }
+.qa-intro { margin-bottom: 24px; }
+.qa-intro h1 { margin: 3px 0 10px; font: 800 clamp(32px, 7vw, 52px)/1.12 var(--font-display); }
+.qa-intro > p:last-child { margin: 0; color: var(--ink-2); line-height: 1.65; }
+
+.qa-kicker {
+  margin: 0;
+  color: var(--ink-2);
+  font: 700 12px/1.4 var(--font-body);
+  letter-spacing: .06em;
+}
+
+.qa-card {
+  min-width: 0;
+  padding: clamp(15px, 4vw, 25px);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
+}
+
+.qa-main h2 { margin: 0 0 14px; font: 800 21px/1.35 var(--font-display); }
+.qa-board-heading h2 { margin-bottom: 0; }
+.qa-login { max-width: 530px; }
+
+.qa-fields {
+  display: grid;
+  min-inline-size: 0;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.qa-label { display: block; margin-top: 4px; font-weight: 700; }
+
+.qa-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+}
+
+.qa-input::placeholder { color: var(--ink-3); }
+textarea.qa-input { display: block; resize: vertical; }
+.qa-input:focus-visible,
+.qa-page :is(a, button):focus-visible,
+.qa-home-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.qa-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.qa-fields .qa-actions { margin-top: 6px; }
+.qa-counter { display: block; color: var(--ink-2); font-size: 12px; text-align: right; }
+.qa-copy { margin: 6px 0 10px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
+.qa-question-copy { font-weight: 700; }
+.qa-reply-label { margin: 12px 0 0; color: var(--ink-2); font-size: 13px; font-weight: 700; }
+.qa-date { display: block; color: var(--ink-2); font: 12px/1.4 var(--font-mono); }
+.qa-admin-card .qa-label { margin: 14px 0 6px; }
+.qa-admin-card .qa-actions { margin-top: 10px; }
+.qa-published { margin-top: 34px; }
+.qa-board-toolbar { margin: 16px 0; }
+.qa-list { display: grid; gap: 14px; }
+
+.qa-message {
+  min-height: 1.5em;
+  margin: 10px 0 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.qa-message:empty { min-height: 0; margin: 0; }
+.qa-page [data-tone="error"] { color: var(--qa-error); }
+.qa-page [data-tone="success"] { color: var(--qa-success); }
+.qa-published > .qa-button,
+.qa-board > .qa-button { margin-top: 14px; }
+.qa-demo { padding: 8px 12px; border: 1px dashed var(--ink-3); border-radius: 8px; color: var(--ink-2); }
+.qa-footer { margin-top: 30px; text-align: right; font-size: 14px; }
+
+@media (width <= 420px) {
+  .qa-shell { padding-inline: 15px; }
+  .qa-button { padding-inline: 10px; }
+}

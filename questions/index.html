@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN" data-theme-scope="site">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4dd" />
+    <meta name="description" content="匿名提问，查看减肥大业的公开问答。" />
+    <title>匿名问答 | 减肥大业</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/qa/styles.css" />
+    <script type="module" src="/src/qa/public.js"></script>
+  </head>
+  <body class="qa-page">
+    <div class="qa-shell">
+      <header class="qa-header">
+        <a class="qa-back" href="../">← 回到减肥大业</a>
+        <button class="qa-button qa-theme" type="button" data-role="theme-toggle" aria-label="切换明暗主题">主题</button>
+      </header>
+      <main class="qa-main" data-qa-public>
+        <header class="qa-intro">
+          <p class="qa-kicker">减肥大业</p>
+          <h1>匿名问答</h1>
+          <p>有什么想问的？提问无需登录。站主审核并回复后，问答会在下方公开。</p>
+        </header>
+        <p class="qa-demo" data-qa-demo hidden>演示模式 · 提问仅在当前页面有效</p>
+        <section class="qa-card" aria-labelledby="qa-submit-title">
+          <h2 id="qa-submit-title">写下你的问题</h2>
+          <form method="post" data-qa-form>
+            <fieldset class="qa-fields" disabled>
+              <label class="qa-label" for="qa-question">问题</label>
+              <textarea class="qa-input" id="qa-question" data-qa-question rows="5" placeholder="想问什么？" aria-describedby="qa-question-counter" required></textarea>
+              <span class="qa-counter" id="qa-question-counter" data-qa-counter>0 / 1000</span>
+              <div class="qa-captcha" data-qa-captcha hidden></div>
+              <div class="qa-actions"><button class="qa-button qa-button-primary" type="submit" data-qa-send>提交问题</button></div>
+            </fieldset>
+            <p class="qa-message" data-qa-form-message role="status">正在加载提问表单…</p>
+          </form>
+          <noscript><p>请启用 JavaScript 后提问或查看问答。</p></noscript>
+        </section>
+        <section class="qa-published" aria-labelledby="qa-published-title">
+          <h2 id="qa-published-title">公开问答</h2>
+          <div class="qa-list" data-qa-questions></div>
+          <p class="qa-message" data-qa-list-message role="status"></p>
+          <button class="qa-button" type="button" data-qa-more hidden>加载更多</button>
+        </section>
+      </main>
+      <footer class="qa-footer"><a href="./admin/" data-qa-admin-link>站主管理</a></footer>
+    </div>
+  </body>
+</html>

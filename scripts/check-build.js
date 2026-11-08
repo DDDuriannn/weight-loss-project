@@ -5,8 +5,14 @@ import { createServer } from 'node:http';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Window } from 'happy-dom';
+import { loadEnv, parseAst } from 'vite';
+import { qaSupabaseOrigin } from '../vite.config.js';
 
+const projectDirectory = fileURLToPath(new URL('../', import.meta.url));
 const dist = fileURLToPath(new URL('../dist/', import.meta.url));
+const qaEnv = loadEnv('production', projectDirectory, 'VITE_QA_');
+const qaOrigin = qaSupabaseOrigin(qaEnv.VITE_QA_SUPABASE_URL);
+const turnstileScript = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 const data = JSON.parse(await readFile(new URL('../src/data/challenge.json', import.meta.url), 'utf8'));
 const start = Date.parse(`${data.startDate}T00:00:00Z`);
 const dayCount = (Date.parse(`${data.endDate}T00:00:00Z`) - start) / 86400000 + 1;
@@ -41,7 +47,8 @@ const server = createServer(async (request, response) => {
       response.writeHead(404).end();
       return;
     }
-    const file = resolve(dist, pathname.slice(basePath.length) || 'index.html');
+    const localPath = pathname.slice(basePath.length);
+    const file = resolve(dist, pathname.endsWith('/') ? `${localPath}index.html` : localPath);
     const fromDist = relative(dist, file);
     if (isAbsolute(fromDist) || fromDist === '..' || fromDist.startsWith(`..${sep}`)) {
       response.writeHead(404).end();
@@ -59,6 +66,8 @@ server.listen(0, '127.0.0.1');
 await once(server, 'listening');
 const origin = `http://127.0.0.1:${server.address().port}`;
 const home = new URL(basePath, origin);
+const questions = new URL('questions/', home);
+const admin = new URL('admin/', questions);
 const loaded = new Map();
 let parsedWindow;
 
@@ -100,9 +109,91 @@ function attributes(tag) {
     .map((match) => [match[1].toLowerCase(), match[2] ?? match[3] ?? match[4]]));
 }
 
-function checkCode(text, label) {
-  assert.doesNotMatch(text, /(?:https?:|wss?:)\/\/|\/api\/|WebSocket|XMLHttpRequest|sendBeacon/i,
-    `${label} contains an external URL or a removed backend integration`);
+function checkCode(text, label, qa = false) {
+  assert.doesNotMatch(text, /\/api\/|WebSocket|XMLHttpRequest|sendBeacon/i,
+    `${label} contains a removed backend integration`);
+  assert.doesNotMatch(text, /["'`]\s*\/\//, `${label} contains a protocol-relative URL`);
+  if (!qa) {
+    assert.doesNotMatch(text, /(?:https?:|wss?:)\/\//i, `${label} contains an external URL`);
+    return;
+  }
+
+  for (const [reference] of text.matchAll(/(?:https?|wss?):\/\/[^\s"'`\\<>]*/gi)) {
+    if (reference === turnstileScript) continue;
+    const url = URL.parse(reference);
+    assert.ok(url && url.origin === qaOrigin && !url.username && !url.password,
+      `${label} references an external URL outside the Q&A allowlist`);
+  }
+}
+
+async function checkScriptGraph(entries, qa = false) {
+  const scripts = new Map(entries.map((entry) => [entry.url.href, entry]));
+  for (const { text, url } of scripts.values()) {
+    checkCode(text, url.pathname, qa);
+    const references = new Set();
+    function visit(node) {
+      if (node === null || typeof node !== 'object') return;
+      if (['ImportDeclaration', 'ImportExpression', 'ExportNamedDeclaration', 'ExportAllDeclaration'].includes(node.type) && node.source) {
+        assert.equal(typeof node.source.value, 'string', `Unresolved module reference: ${url.pathname}`);
+        references.add(node.source.value);
+      }
+      for (const child of Object.values(node)) visit(child);
+    }
+    visit(parseAst(text));
+
+    for (const reference of references) {
+      const dependency = await load(reference, url);
+      assert.equal(dependency.extension, '.js', `Expected a script module: ${reference}`);
+      scripts.set(dependency.url.href, dependency);
+    }
+  }
+  return [...scripts.values()];
+}
+
+function checkLinks(document, page) {
+  const links = new Set();
+  for (const link of document.querySelectorAll('a[href]')) {
+    const href = link.getAttribute('href');
+    const url = new URL(href, page);
+    assert.equal(url.origin, origin, `Unexpected external link: ${href}`);
+    assert.ok(url.pathname.startsWith(basePath), `Link escaped the repository subpath: ${href}`);
+    links.add(url.href);
+  }
+  return links;
+}
+
+async function loadPageResources(document, page) {
+  const resources = new Set();
+  for (const element of document.querySelectorAll('script, link, img, source, video, audio')) {
+    const references = [element.getAttribute('src'), element.getAttribute('poster')];
+    const srcset = element.getAttribute('srcset');
+    if (srcset) references.push(...srcset.split(',').map((item) => item.trim().split(/\s+/)[0]));
+    if (element.localName === 'link') references.push(element.getAttribute('href'));
+    for (const reference of references.filter(Boolean)) resources.add(await load(reference, page));
+  }
+  for (const script of document.querySelectorAll('script:not([src])')) {
+    checkCode(script.textContent, `Inline script on ${page.pathname}`);
+  }
+  return [...resources];
+}
+
+async function checkStyles(styles) {
+  const fonts = new Set();
+  for (const style of styles) {
+    assert.doesNotMatch(style.text, /@import\b/i, 'Unexpected CSS import; all styles must be bundled');
+    for (const match of style.text.matchAll(/url\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*?))\s*\)/gi)) {
+      const asset = await load(match[1] ?? match[2] ?? match[3], style.url);
+      if (asset.extension === '.woff2') fonts.add(asset.url.pathname.split('/').pop());
+    }
+  }
+  return fonts;
+}
+
+function checkHtml(html) {
+  assert.match(html, /<html\b[^>]*lang="zh-CN"/i);
+  assert.doesNotMatch(html, /<!--\s*[A-Z_]+\s*-->|\{\{[\s\S]*?\}\}|__[A-Z][A-Z0-9_]*__|%[A-Z][A-Z0-9_]*%/,
+    'Unresolved build placeholder in HTML');
+  assert.doesNotMatch(html, /<(?:base|iframe|object|embed)\b/i, 'Unexpected embedded document or base URL');
 }
 
 const escape = (value) => String(value).replace(/[&<>"']/g, (character) => ({
@@ -157,11 +248,9 @@ function checkEntry(container, titleSelector, entry) {
 try {
   // Root-relative assets must really fail rather than accidentally pass this check.
   assert.equal((await fetch(new URL('/fonts/Baloo2-Bold.woff2', origin))).status, 404);
+  assert.equal((await fetch(new URL('questions/not-a-page/', home))).status, 404);
   const { text: html } = await load(home);
-  assert.match(html, /<html\b[^>]*lang="zh-CN"/i);
-  assert.doesNotMatch(html, /<!--\s*[A-Z_]+\s*-->|\{\{[\s\S]*?\}\}|__[A-Z][A-Z0-9_]*__|%[A-Z][A-Z0-9_]*%/,
-    'Unresolved build placeholder in HTML');
-  assert.doesNotMatch(html, /<(?:base|iframe|object|embed)\b/i, 'Unexpected embedded document or base URL');
+  checkHtml(html);
 
   assert.equal(dayCount, 28, 'Expected a 28-day plan');
   assert.equal(data.timeZone, 'Asia/Shanghai', 'Expected Beijing time');
@@ -240,37 +329,15 @@ try {
   assert.deepEqual(calendarCells, [
     ...Array(leadingBlanks).fill(null), ...days, ...Array(trailingBlanks).fill(null),
   ], 'Calendar weekday alignment is incorrect');
-  for (const link of document.querySelectorAll('a[href]')) {
-    const href = link.getAttribute('href');
-    const url = new URL(href, home);
-    assert.equal(url.origin, origin, `Unexpected external link: ${href}`);
-    assert.ok(url.pathname.startsWith(basePath), `Link escaped the repository subpath: ${href}`);
-  }
-
-  for (const element of document.querySelectorAll('script, link, img, source, video, audio')) {
-    const references = [element.getAttribute('src'), element.getAttribute('poster')];
-    const srcset = element.getAttribute('srcset');
-    if (srcset) references.push(...srcset.split(',').map((item) => item.trim().split(/\s+/)[0]));
-    if (element.localName === 'link') references.push(element.getAttribute('href'));
-    for (const reference of references.filter(Boolean)) await load(reference);
-  }
-  for (const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) checkCode(match[1], 'Inline script');
-
-  const styles = [...loaded.values()].filter((resource) => resource.extension === '.css');
-  const scripts = [...loaded.values()].filter((resource) => resource.extension === '.js');
+  assert.ok(checkLinks(document, home).has(questions.href), 'Home must link to the public Q&A page');
+  const resources = await loadPageResources(document, home);
+  const styles = resources.filter((resource) => resource.extension === '.css');
+  const scripts = await checkScriptGraph(resources.filter((resource) => resource.extension === '.js'));
   assert.ok(styles.length > 0, 'Stylesheet was not loaded');
   assert.ok(scripts.length > 0, 'Application script was not loaded');
   assert.ok(scripts.some((script) => script.text.includes(data.timeZone)), 'Configured time zone is missing from the application');
-  for (const script of scripts) checkCode(script.text, script.url.pathname);
 
-  const fonts = new Set();
-  for (const style of styles) {
-    assert.doesNotMatch(style.text, /@import\b/i, 'Unexpected CSS import; all styles must be bundled');
-    for (const match of style.text.matchAll(/url\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*?))\s*\)/gi)) {
-      const asset = await load(match[1] ?? match[2] ?? match[3], style.url);
-      if (asset.extension === '.woff2') fonts.add(asset.url.pathname.split('/').pop());
-    }
-  }
+  const fonts = await checkStyles(styles);
   assert.deepEqual([...fonts].sort(), [
     'Baloo2-Bold.woff2', 'Baloo2-ExtraBold.woff2',
     'GenSenRounded-Bold-UI.woff2', 'GenSenRounded-Heavy-UI.woff2',
@@ -279,8 +346,34 @@ try {
   assert.equal(loaded.size, 1 + scripts.length + styles.length + fonts.size + media.size,
     'Unexpected resource outside the page, scripts, styles, fonts and rendered media');
 
-  console.log(`Build check passed: ${basePath}, ${dayCount} days, ${records.length} recorded rows, ${articles.length} articles, ${document.querySelectorAll('.challenge-diary').length} diary displays, ${document.querySelectorAll('.challenge-weight').length} verified weight displays, ${dayCount} tiles/panels, ${leadingBlanks}/${trailingBlanks} calendar blanks, ${loaded.size} HTTP 200 resources (${scripts.length} script, ${styles.length} stylesheet, ${fonts.size} fonts, ${media.size} media).`);
-  console.log('All resources stay under the repository subpath; no unresolved placeholders or external loading integrations found.');
+  const homeResources = loaded.size;
+  const pageTitles = new Set([document.title]);
+  for (const [page, marker, expectedLinks] of [
+    [questions, '[data-qa-public]', [home, admin]],
+    [admin, '[data-qa-admin]', [questions]],
+  ]) {
+    const { text: qaHtml } = await load(page);
+    checkHtml(qaHtml);
+    const qaDocument = new parsedWindow.DOMParser().parseFromString(qaHtml, 'text/html');
+    assert.ok(qaDocument.title && !pageTitles.has(qaDocument.title), `Expected a separate page at ${page.pathname}`);
+    assert.ok(qaDocument.querySelector(marker), `Missing Q&A entry content at ${page.pathname}`);
+    assert.equal(qaDocument.querySelector('.challenge-page'), null, `Home template appeared at ${page.pathname}`);
+    pageTitles.add(qaDocument.title);
+    const links = checkLinks(qaDocument, page);
+    for (const target of expectedLinks) {
+      assert.ok(links.has(target.href), `${page.pathname} must link to ${target.pathname}`);
+    }
+
+    const qaResources = await loadPageResources(qaDocument, page);
+    const qaStyles = qaResources.filter((resource) => resource.extension === '.css');
+    const qaScripts = qaResources.filter((resource) => resource.extension === '.js');
+    assert.ok(qaStyles.length > 0 && qaScripts.length > 0, `Missing styles or scripts at ${page.pathname}`);
+    await checkStyles(qaStyles);
+    await checkScriptGraph(qaScripts, true);
+  }
+
+  console.log(`Build check passed: ${basePath}, ${dayCount} days, ${records.length} recorded rows, ${articles.length} articles, ${document.querySelectorAll('.challenge-diary').length} diary displays, ${document.querySelectorAll('.challenge-weight').length} verified weight displays, ${dayCount} tiles/panels, ${leadingBlanks}/${trailingBlanks} calendar blanks, ${homeResources} home resources.`);
+  console.log(`Both Q&A pages and their resources load under the repository subpath (${loaded.size} distinct HTTP 200 resources). Home remains independent of the Q&A network allowlist.`);
 } finally {
   if (parsedWindow) { await parsedWindow.happyDOM.abort(); parsedWindow.close(); }
   server.closeAllConnections();

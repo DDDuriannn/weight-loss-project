@@ -4,7 +4,7 @@ zwh（loser & joker）的 28 天体重、饮食、运动与日记。计划从 **
 
 页面提供日期条、列表／日历切换、日期定位、明暗主题和时钟。列表显示已有记录的日期并默认展开，日历包含完整的 28 天。只有体重或日记的日期也会进入列表。
 
-这是使用 Vite 和原生 HTML/CSS/JavaScript 的静态网站，不需要登录、数据库、环境密钥或后端服务。页面没有第三方资源请求或外链，通过 GitHub Pages 发布。
+站点使用 Vite 和原生 HTML/CSS/JavaScript，通过 GitHub Pages 发布。匿名问答使用云端 Supabase 和 Turnstile，站主可以登录管理页回复。具体配置和验收步骤见 [匿名问答部署与维护](docs/anonymous-qa.md)。
 
 ## 本地运行
 

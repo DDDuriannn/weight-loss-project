@@ -233,7 +233,8 @@ test('personal page has one readable record day, all 28 dates and no old identit
     assert.equal(document.querySelectorAll('.challenge-strip button').length, 28);
     assert.equal(document.querySelectorAll('[data-select-day]').length, 28);
     assert.equal(document.querySelectorAll('[data-detail-day]').length, 28);
-    assert.equal(document.querySelectorAll('a, iframe, script, .language-toggle, .challenge-votes, .masthead-presence').length, 0);
+    assert.deepEqual([...document.querySelectorAll('a')].map((link) => link.getAttribute('href')), ['./questions/']);
+    assert.equal(document.querySelectorAll('iframe, script, .language-toggle, .challenge-votes, .masthead-presence').length, 0);
     assert.equal(document.querySelectorAll('img').length, 1);
     assert.equal(document.querySelector('.challenge-promise img.challenge-intro-gif').getAttribute('src'), '/media/intro.gif');
     assert.doesNotMatch(document.body.innerHTML, /Tibo|Codex|thsottiaux|产品改进|储备重置|美西|https?:|undefined|<!--\s*CHALLENGE_/);

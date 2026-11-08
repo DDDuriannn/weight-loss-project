@@ -1,0 +1,4 @@
+project_id = "weight-loss-project"
+
+[functions.qa]
+verify_jwt = false

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN" data-theme-scope="site">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff4dd" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>站主管理 | 减肥大业</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/qa/styles.css" />
+    <script type="module" src="/src/qa/admin.js"></script>
+  </head>
+  <body class="qa-page">
+    <div class="qa-shell">
+      <header class="qa-header">
+        <a class="qa-back" href="../" data-qa-public-link>← 回到匿名问答</a>
+        <button class="qa-button qa-theme" type="button" data-role="theme-toggle" aria-label="切换明暗主题">主题</button>
+      </header>
+      <main class="qa-main" data-qa-admin>
+        <header class="qa-intro">
+          <p class="qa-kicker">匿名问答</p>
+          <h1>站主管理</h1>
+          <p>查看收到的问题，撰写回复并公开问答。</p>
+        </header>
+        <p class="qa-demo" data-qa-demo hidden>演示模式 · 可用任意格式正确的邮箱和任意密码登录</p>
+        <form class="qa-card qa-login" method="post" data-qa-login hidden>
+          <h2>站主登录</h2>
+          <fieldset class="qa-fields" disabled>
+            <label class="qa-label" for="qa-email">邮箱</label>
+            <input class="qa-input" id="qa-email" type="email" autocomplete="username" data-qa-email required />
+            <label class="qa-label" for="qa-password">密码</label>
+            <input class="qa-input" id="qa-password" type="password" autocomplete="current-password" data-qa-password required />
+            <div class="qa-actions"><button class="qa-button qa-button-primary" type="submit" data-qa-login-submit>登录</button></div>
+          </fieldset>
+          <p class="qa-message" data-qa-login-message role="status"></p>
+        </form>
+        <section class="qa-board" data-qa-board aria-labelledby="qa-board-title" hidden>
+          <div class="qa-board-heading">
+            <h2 id="qa-board-title">问题收件箱</h2>
+            <button class="qa-button" type="button" data-qa-sign-out>退出</button>
+          </div>
+          <div class="qa-board-toolbar">
+            <div class="qa-actions" role="group" aria-label="问题状态">
+              <button class="qa-button" type="button" data-qa-status="pending" aria-pressed="true">待处理</button>
+              <button class="qa-button" type="button" data-qa-status="published" aria-pressed="false">已公开</button>
+              <button class="qa-button" type="button" data-qa-status="archived" aria-pressed="false">已归档</button>
+            </div>
+            <button class="qa-button" type="button" data-qa-admin-reload>刷新</button>
+          </div>
+          <div class="qa-list" data-qa-admin-questions></div>
+          <p class="qa-message" data-qa-admin-message role="status"></p>
+          <button class="qa-button" type="button" data-qa-admin-more hidden>加载更多</button>
+        </section>
+        <noscript><p>请启用 JavaScript 后登录。</p></noscript>
+      </main>
+    </div>
+  </body>
+</html>

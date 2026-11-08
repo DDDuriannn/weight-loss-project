@@ -38,11 +38,15 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build static site
-        run: npm run build
-
-      - name: Check repository subpath deployment
-        run: npm run check:build
+      - name: Build and check repository subpath deployment
+        env:
+          QA_REQUIRE_CONFIG: '1'
+          VITE_QA_SUPABASE_URL: ${{ vars.VITE_QA_SUPABASE_URL }}
+          VITE_QA_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_QA_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_QA_TURNSTILE_SITE_KEY: ${{ vars.VITE_QA_TURNSTILE_SITE_KEY }}
+        run: |
+          npm run build
+          npm run check:build
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
