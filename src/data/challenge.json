@@ -158,6 +158,32 @@
         }
       ],
       "diary": "昨天晚上做了一个梦，梦里面我们彻夜长谈，解开了所有误会。但是最后还是没有在一起，她最后让我等她。"
+    },
+    {
+      "date": "2026-11-10",
+      "weightKg": 100.5,
+      "entries": [
+        {
+          "id": "day-7-diet",
+          "category": "diet",
+          "text": "饮食：一盘鸡胸肉 + 2 勺蛋白粉 + 一盘炒藕丝 + 100g 米饭（约 1000 大卡）"
+        },
+        {
+          "id": "day-7-strength",
+          "category": "exercise",
+          "text": "运动：挺举 + 杠铃划船 + 哑铃划船 + 高位下拉 + 腹",
+          "image": {
+            "src": "media/day-07-strength.jpg",
+            "alt": "第 7 天力量训练截图"
+          }
+        },
+        {
+          "id": "day-7-run",
+          "category": "exercise",
+          "text": "运动：柔道训练 1 小时"
+        }
+      ],
+      "diary": "这他妈体重就降不到两位数吗？"
     }
   ]
 }
