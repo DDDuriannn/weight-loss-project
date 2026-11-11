@@ -184,6 +184,36 @@
         }
       ],
       "diary": "这他妈体重就降不到两位数吗？这校队训练总共就俩人，给我整成私教课了是吧，周末还要去北体练，很难活过这周了"
+    },
+    {
+      "date": "2026-11-11",
+      "weightKg": 100.1,
+      "entries": [
+        {
+          "id": "day-8-diet",
+          "category": "diet",
+          "text": "饮食：一盘鸡胸肉 + 2 勺蛋白粉 + 两盘烧茄子 + 200g 米饭（约 1500 大卡）"
+        },
+        {
+          "id": "day-8-strength",
+          "category": "exercise",
+          "text": "运动：卧推 + 哑铃卧推 + 挺举 + 腹",
+          "image": {
+            "src": "media/day-08-strength.jpg",
+            "alt": "第 8 天力量训练截图"
+          }
+        },
+        {
+          "id": "day-8-run",
+          "category": "exercise",
+          "text": "运动：爬楼 100 层",
+          "image": {
+            "src": "media/day-08-run.jpg",
+            "alt": "第 8 天跑步记录截图"
+          }
+        }
+      ],
+      "diary": "卡平台了，今天放纵餐。凭借我准确的第六感，感觉学妹快要官宣了😋😋😋"
     }
   ]
 }
