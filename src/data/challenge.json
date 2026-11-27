@@ -513,6 +513,48 @@
         }
       ],
       "diary": "现在的局势我也有点看不懂了，感觉微信聊的挺顺畅，但是约她出来玩就不出来，感觉要完犊子😭"
+    },
+    {
+      "date": "2026-11-26",
+      "weightKg": 94.85,
+      "entries": [
+        {
+          "id": "day-23-diet",
+          "category": "diet",
+          "text": "饮食：100g 紫米饭 + 一盘西葫芦 + 一盘西红柿炒鸡蛋 + 4 个鸡蛋 + 2 勺蛋白粉 + 若干小零食（约 2000 大卡）"
+        },
+        {
+          "id": "day-23-strength",
+          "category": "exercise",
+          "text": "运动：深蹲 + 腹",
+          "image": {
+            "src": "media/day-23-strength.jpg",
+            "alt": "第 23 天力量训练截图"
+          }
+        }
+      ],
+      "diary": "日记写到第二天去了"
+    },
+    {
+      "date": "2026-11-27",
+      "weightKg": 95.40,
+      "entries": [
+        {
+          "id": "day-24-diet",
+          "category": "diet",
+          "text": "饮食：100g 紫米饭 + 一盘西兰花 + 一盘地三鲜 + 4 个鸡蛋 + 2 勺蛋白粉（约 1500 大卡）"
+        },
+        {
+          "id": "day-24-run",
+          "category": "exercise",
+          "text": "运动：爬楼 120 层",
+          "image": {
+            "src": "media/day-24-run.jpg",
+            "alt": "第 24 天跑步记录截图"
+          }
+        }
+      ],
+      "diary": "最近聊的又顺利又不顺利的，我决定按照军师的意见，就追一个月。一个月之后的元旦，成败在此一举"
     }
   ]
 }
